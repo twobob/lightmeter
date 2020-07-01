@@ -1,17 +1,10 @@
-#include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <BH1750.h>
 #include <EEPROM.h>
 #include <avr/sleep.h>
+#include <U8g2lib.h>
 
-#define OLED_DC                 11
-#define OLED_CS                 12
-#define OLED_CLK                8 //10
-#define OLED_MOSI               9 //9
-#define OLED_RESET              10 //13
-Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
+U8G2_SH1106_128X64_NONAME_F_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 BH1750 lightMeter;
 
@@ -71,6 +64,13 @@ int battVolts;
 #define batteryInterval 10000
 double lastBatteryTime = 0;
 
+#define WHITE 1
+
+#define FONT_STANDARD u8g2_font_profont10_mr
+#define FONT_H1 u8g2_font_10x20_mr
+#define FONT_H2 u8g2_font_inb16_mr 
+// 26634 bytes
+
 #include "lightmeter.h"
 
 void setup() {  
@@ -89,9 +89,10 @@ void setup() {
   lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE_2);
   //lightMeter.begin(BH1750::ONE_TIME_LOW_RES_MODE); // for low resolution but 16ms light measurement time.
 
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3D);
-  display.setTextColor(WHITE);
-  display.clearDisplay();
+  display.begin();
+  display.setFont(WHITE);
+  display.clear();
+
 
   // IF NO MEMORY WAS RECORDED BEFORE, START WITH THIS VALUES otherwise it will read "255"
   if (apertureIndex > MaxApertureIndex) {
@@ -124,58 +125,58 @@ void setup() {
 }
 
 void loop() {  
-  if (millis() >= lastBatteryTime + batteryInterval) {
-    lastBatteryTime = millis();
-    battVolts = getBandgap();
-  }
-  
-  readButtons();
-
-  menu();
-
-  if (MeteringButtonState == 0) {
-    // Save setting if Metering button pressed.
-    SaveSettings();
-
-    lux = 0;
-    refresh();
-    
-    if (meteringMode == 0) {
-      // Ambient light meter mode.
-      lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
-
-      lux = getLux();
-
-      if (Overflow == 1) {
-        delay(10);
-        getLux();
-      }
-
-      refresh();
-      delay(200);
-    } else if (meteringMode == 1) {
-      // Flash light metering
-      lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
-
-      unsigned long startTime = millis();
-      uint16_t currentLux = 0;
-      lux = 0;
-
-      while (true) {
-        // check max flash metering time
-        if (startTime + MaxFlashMeteringTime < millis()) {
-          break;
-        }
-
-        currentLux = getLux();
-        delay(16);
-        
-        if (currentLux > lux) {
-          lux = currentLux;
-        }
-      }
-
-      refresh();
+    if (millis() >= lastBatteryTime + batteryInterval) {
+      lastBatteryTime = millis();
+      battVolts = getBandgap();
     }
-  }
+    
+    readButtons();
+  
+    menu();
+  
+    if (MeteringButtonState == 0) {
+      // Save setting if Metering button pressed.
+      SaveSettings();
+  
+      lux = 0;
+      refresh();
+      
+      if (meteringMode == 0) {
+        // Ambient light meter mode.
+        lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
+  
+        lux = getLux();
+  
+        if (Overflow == 1) {
+          delay(10);
+          getLux();
+        }
+  
+        refresh();
+        delay(200);
+      } else if (meteringMode == 1) {
+        // Flash light metering
+        lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
+  
+        unsigned long startTime = millis();
+        uint16_t currentLux = 0;
+        lux = 0;
+  
+        while (true) {
+          // check max flash metering time
+          if (startTime + MaxFlashMeteringTime < millis()) {
+            break;
+          }
+  
+          currentLux = getLux();
+          delay(16);
+          
+          if (currentLux > lux) {
+            lux = currentLux;
+          }
+        }
+  
+        refresh();
+      }
+    }
 }

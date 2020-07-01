@@ -1,5 +1,5 @@
 void outOfrange() {
-  display.println(F("--"));
+  display.print(F("--"));
 }
 
 void SaveSettings() {
@@ -40,6 +40,7 @@ int getBandgap(void) {
   return results;
 }
 
+// TODO is this still in use?
 void footer() {
   display.setCursor(0, 55);
   display.print(F("press M"));
@@ -411,11 +412,12 @@ void refresh() {
   }
 
   uint8_t linePos[] = {15, 37};
-  display.clearDisplay();
-  display.setTextColor(WHITE);
+  //display.clearBuffer();
+  display.clear();
+  display.setDrawColor(WHITE);
 
-  display.setTextSize(1);
-  display.setCursor(13, 1);
+  display.setFont(FONT_STANDARD);
+  display.setCursor(16, 8);
   display.print(F("ISO:"));
 
   if (iso > 999999) {
@@ -427,10 +429,11 @@ void refresh() {
   } else {
     display.print(iso);
   }
-  display.drawLine(0, 10, 128, 10, WHITE); // LINE DIVISOR
+  display.setDrawColor(WHITE);
+  display.drawLine(0, 11, 128, 11); // LINE DIVISOR
 
-  display.setCursor(10, linePos[0]);
-  display.setTextSize(2);
+  display.setCursor(11, linePos[0] + 15);
+  display.setFont(FONT_H1);
   display.print(F("f/"));
   if (A > 0) {
     if (A >= 100) {
@@ -442,28 +445,37 @@ void refresh() {
     outOfrange();
   }
 
-  display.setTextSize(1);
+  display.setFont(FONT_STANDARD);
 
   // battery indicator
-  display.drawRect(122, 1, 6, 8, WHITE);
-  display.drawLine(124, 0, 125, 0, WHITE);
+  // drawRect(display, 122, 1, 6, 8, WHITE);
+  display.setDrawColor(WHITE);
+  display.drawFrame(121, 1, 6, 8);
+  display.setDrawColor(WHITE);
+  display.drawLine(123, 0, 124, 0);
 
   // battery indicator for 2 elements of 1.5v each.
   if (battVolts > 270) {
     // full
-    display.fillRect(123, 1, 4, 7, WHITE);
+    // fillRect(display, 122, 1, 4, 7, WHITE);
+    display.setDrawColor(WHITE);
+    display.drawBox(122, 1, 4, 7);
   } else if (battVolts > 240) {
     // medium
-    display.fillRect(123, 4, 4, 5, WHITE);
+    // fillRect(display, 122, 4, 4, 5, WHITE);
+    display.setDrawColor(WHITE);
+    display.drawBox(122, 4, 4, 5);
   } else if (battVolts > 210) {
     // minimum
-    display.fillRect(123, 6, 4, 3, WHITE);
+    // fillRect(display, 122, 6, 4, 3, WHITE);
+    display.setDrawColor(WHITE);
+    display.drawBox(122, 6, 4, 3);
   } else {
     // empty
   }
 
   // Metering mode icon
-  display.setCursor(0, 1);
+  display.setCursor(1, 8);
   if (meteringMode == 0) {
     // Ambient light
     display.print(F("A"));
@@ -473,35 +485,37 @@ void refresh() {
   }
   // End of metering mode icon
 
-  display.setCursor(72, 1);
+  display.setCursor(72, 8);
   display.print(F("lx:"));
   display.print(lux, 0);
 
-  display.drawLine(95, linePos[0] - 1, 95, linePos[0] + 17, WHITE); // LINE DIVISOR
-  display.setTextSize(1);
-  display.setCursor(100, linePos[0]);
+  display.setDrawColor(WHITE);
+  display.drawLine(95, linePos[0] - 1, 95, linePos[0] + 18); // LINE DIVISOR
+  display.setFont(FONT_STANDARD);
+  display.setCursor(100, linePos[0] + 7);
   display.print(F("EV: "));
-  display.setCursor(100, linePos[0] + 10);
+  display.setCursor(100, linePos[0] + 17);
   if (lux > 0) {
-    display.println(EV, 0);
+    display.print(EV, 0);
   } else {
-    display.println(0, 0);
+    display.print(0, 0);
   }
 
 // ND filter indicator
   if (ndIndex > 0) {
-    //display.drawLine(0, 55, 128, 55, WHITE); // LINE DIVISOR
-    display.setTextSize(1);
-    display.setCursor(0, 57);
+    //display.setDrawColor(WHITE);
+    //display.drawLine(0, 55, 128, 55); // LINE DIVISOR
+    display.setFont(FONT_STANDARD);
+    display.setCursor(0, 67);
     display.print(F("ND"));
     //display.setCursor(100, linePos[0] + 10);
     display.print(pow(2, ndIndex), 0);
     display.print(F("="));
-    display.println(ndStop / 10.0, 1);
+    display.print(ndStop / 10.0, 1);
   }
 
-  display.setTextSize(2);
-  display.setCursor(10, linePos[1]);
+  display.setFont(FONT_H1);
+  display.setCursor(12, linePos[1] + 15);
   display.print(F("T:"));
 
   if (Tdisplay == 0) {
@@ -522,11 +536,11 @@ void refresh() {
   }
 
   // priority marker (shutter or aperture priority indicator)
-  display.setTextSize(1);
-  display.setCursor(0, linePos[modeIndex] + 5);
+  display.setFont(FONT_STANDARD);
+  display.setCursor(2, linePos[modeIndex] + 12);
   display.print(F("*"));
 
-  display.display();
+  display.sendBuffer();
 }
 
 void showISOMenu() {
@@ -534,31 +548,32 @@ void showISOMenu() {
   NDMenu = false;
   mainScreen = false;
 
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setCursor(50, 4);
-  display.println(F("ISO"));
-  display.setTextSize(3);
+  display.clear();
+  //display.clearDisplay();
+  display.setFont(FONT_H1);
+  display.setCursor(50, 14);
+  display.print(F("ISO"));
+  display.setFont(FONT_H2);
 
   long iso = getISOByIndex(ISOIndex);
 
   if (iso > 999999) {
-    display.setCursor(0, 40);
+    display.setCursor(10, 50);
   } else if (iso > 99999) {
-    display.setCursor(10, 40);
+    display.setCursor(20, 50);
   } else if (iso > 9999) {
-    display.setCursor(20, 40);
+    display.setCursor(30, 50);
   } else if (iso > 999) {
-    display.setCursor(30, 40);
+    display.setCursor(40, 50);
   } else if (iso > 99) {
-    display.setCursor(40, 40);
+    display.setCursor(45, 50);
   } else {
-    display.setCursor(50, 40);
+    display.setCursor(55, 50);
   }
 
   display.print(iso);
 
-  display.display();
+  display.sendBuffer();
   delay(200);
 }
 
@@ -567,32 +582,33 @@ void showNDMenu() {
   mainScreen = false;
   NDMenu = true;
 
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setCursor(10, 4);
-  display.println(F("ND Filter"));
-  display.setTextSize(3);
+  display.clear();
+  //display.clearDisplay();
+  display.setFont(FONT_H1);
+  display.setCursor(10, 14);
+  display.print(F("ND Filter"));
+  display.setFont(FONT_H2);
 
   if (ndIndex > 9) {
-    display.setCursor(10, 40);
+    display.setCursor(10, 50);
   } else if (ndIndex > 6) {
-    display.setCursor(20, 40);
+    display.setCursor(20, 50);
   } else if (ndIndex > 3) {
-    display.setCursor(30, 40);
+    display.setCursor(30, 50);
   } else {
-    display.setCursor(40, 40);
+    display.setCursor(40, 50);
   }
 
   if (ndIndex > 0) {
     display.print(F("ND"));
     display.print(pow(2, ndIndex), 0);
   } else {
-    display.setTextSize(2);
-    display.setCursor(10, 40);
+    display.setFont(FONT_H1);
+    display.setCursor(10, 50);
     display.print(F("No filter"));
   }
 
-  display.display();
+  display.sendBuffer();
   delay(200);
 }
 
@@ -731,4 +747,3 @@ void readButtons() {
   MenuButtonState = digitalRead(MenuButtonPin);
   MeteringModeButtonState = digitalRead(MeteringModeButtonPin);
 }
-

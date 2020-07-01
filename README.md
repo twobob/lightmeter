@@ -1,7 +1,25 @@
 # lightmeter
 A Lightmeter/Flashmeter for photographers, based on Arduino.
+TODO update this!
 
-Components:
+# Task list
+[x] Rewrite the code to use u8g2 instead of the Adafruit lib
+[ ] Investigate: why does it take 2 measures in ambient mode to get the actual result?
+[ ] Refactor the code - so it is easier to do the next step
+[ ] Modify the code, to work with 128x32 displays
+[ ] Find a solution to get rid of the arduino nano, and be more power efficient, and use rechargeable batteries (1.2V) ( + boost regulator)
+[ ] Draw new schematic diagram
+[ ] Make the whole thing take up less space and RAM
+ - [ ] Use u8x8 lib (this fixes the RAM problem, as it has no buffer)
+ - [ ] Use u8x8 fonts, and restrict them to the miniman number of characters needed (possibly numbers only)
+ - [ ] Use bitmaps insted of text where applicable (this helps use tighter font set)
+[ ] New mode: fixed aperture size, fixed iso, fixed timing: indicate that you need a flash, or how dark will the picture be (for low end cameras)
+[ ] update the readme with the updated description, components and feature list. Also add credits to the original author!
+[ ] fix getBandgap() for attiny devices
+[ ] modify the schematic to have the buttons take up less pins
+
+## Components:
+TODO update this list:
 1. Arduino NANO v.3 https://www.banggood.com/custlink/K3Kvbdnnea
 2. BH1750 light sensor https://www.banggood.com/custlink/mKDv2Ip1dr or https://www.banggood.com/custlink/GvGvnRNN0e
 3. SSD1306 128*64 OLED SPI Display https://www.banggood.com/custlink/DDKmsdAQ6z
@@ -13,8 +31,8 @@ Thanks @morozgrafix https://github.com/morozgrafix for creating schematic diagra
 
 The lightmeter based on Arduino as a main controller and BH1750 as a metering cell. Information is displayed on SSD1306 OLED display. The device is powered by 2 AAA batteries.
 
-Functions list:
-
+## Functions list:
+TODO update this list:
 * Ambient light metering
 * Flash light metering
 * ND filter correction
