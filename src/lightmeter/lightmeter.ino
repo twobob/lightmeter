@@ -71,6 +71,12 @@ double lastBatteryTime = 0;
 #define FONT_H2 u8g2_font_inb16_mr 
 // 26634 bytes
 
+#define DISPLAY_WIDTH 128
+#define DISPLAY_HEIGHT 64
+
+#define BATTERY_FULL_VALUE 270
+#define BATTERY_EMPTY_VALUE 210
+
 #include "lightmeter.h"
 
 void setup() {  

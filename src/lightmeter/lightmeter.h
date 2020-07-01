@@ -338,6 +338,18 @@ uint8_t getND(uint8_t ndIndex) {
   return 3 + (ndIndex - 1) * 3;
 }
 
+
+uint8_t numDigits(long number)
+{
+    uint8_t digits = 0;
+    if (number < 0) digits = 1; // remove this line if '-' counts as a digit
+    while (number) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
+
 // Calculate new exposure value and display it.
 void refresh() {
   ISOMenu = false;
@@ -412,9 +424,7 @@ void refresh() {
   }
 
   uint8_t linePos[] = {15, 37};
-  //display.clearBuffer();
   display.clear();
-  display.setDrawColor(WHITE);
 
   display.setFont(FONT_STANDARD);
   display.setCursor(16, 8);
@@ -429,7 +439,6 @@ void refresh() {
   } else {
     display.print(iso);
   }
-  display.setDrawColor(WHITE);
   display.drawLine(0, 11, 128, 11); // LINE DIVISOR
 
   display.setCursor(11, linePos[0] + 15);
@@ -448,30 +457,14 @@ void refresh() {
   display.setFont(FONT_STANDARD);
 
   // battery indicator
-  // drawRect(display, 122, 1, 6, 8, WHITE);
-  display.setDrawColor(WHITE);
+  // battery body
   display.drawFrame(121, 1, 6, 8);
-  display.setDrawColor(WHITE);
+  // top of battery
   display.drawLine(123, 0, 124, 0);
 
-  // battery indicator for 2 elements of 1.5v each.
-  if (battVolts > 270) {
-    // full
-    // fillRect(display, 122, 1, 4, 7, WHITE);
-    display.setDrawColor(WHITE);
-    display.drawBox(122, 1, 4, 7);
-  } else if (battVolts > 240) {
-    // medium
-    // fillRect(display, 122, 4, 4, 5, WHITE);
-    display.setDrawColor(WHITE);
-    display.drawBox(122, 4, 4, 5);
-  } else if (battVolts > 210) {
-    // minimum
-    // fillRect(display, 122, 6, 4, 3, WHITE);
-    display.setDrawColor(WHITE);
-    display.drawBox(122, 6, 4, 3);
-  } else {
-    // empty
+  // fill the battery indicator according to the measured battery level
+  for (uint8_t i = 0; i <= map(battVolts, BATTERY_EMPTY_VALUE, BATTERY_FULL_VALUE, 0, 5); i++) {
+    display.drawHLine(122, 7 - i, 4);
   }
 
   // Metering mode icon
@@ -489,7 +482,7 @@ void refresh() {
   display.print(F("lx:"));
   display.print(lux, 0);
 
-  display.setDrawColor(WHITE);
+//  display.setDrawColor(WHITE);
   display.drawLine(95, linePos[0] - 1, 95, linePos[0] + 18); // LINE DIVISOR
   display.setFont(FONT_STANDARD);
   display.setCursor(100, linePos[0] + 7);
@@ -549,27 +542,15 @@ void showISOMenu() {
   mainScreen = false;
 
   display.clear();
-  //display.clearDisplay();
   display.setFont(FONT_H1);
   display.setCursor(50, 14);
   display.print(F("ISO"));
   display.setFont(FONT_H2);
 
+  // get the actual iso value based on the index
   long iso = getISOByIndex(ISOIndex);
-
-  if (iso > 999999) {
-    display.setCursor(10, 50);
-  } else if (iso > 99999) {
-    display.setCursor(20, 50);
-  } else if (iso > 9999) {
-    display.setCursor(30, 50);
-  } else if (iso > 999) {
-    display.setCursor(40, 50);
-  } else if (iso > 99) {
-    display.setCursor(45, 50);
-  } else {
-    display.setCursor(55, 50);
-  }
+  // calculate based on the width of the text, where it should be positioned
+  display.setCursor((DISPLAY_WIDTH / 2) - ((numDigits(iso) * 13) / 2), 50);
 
   display.print(iso);
 
