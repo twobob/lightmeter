@@ -463,8 +463,11 @@ void refresh() {
   display.drawLine(123, 0, 124, 0);
 
   // fill the battery indicator according to the measured battery level
-  for (uint8_t i = 0; i <= map(battVolts, BATTERY_EMPTY_VALUE, BATTERY_FULL_VALUE, 0, 5); i++) {
-    display.drawHLine(122, 7 - i, 4);
+  for (uint8_t i = 0; i <= map(battVolts, BATTERY_EMPTY_VALUE, BATTERY_FULL_VALUE, 0, 6); i++) {
+    if(i > 6){
+      break;
+    }
+    display.drawHLine(122, 8 - i, 4);
   }
 
   // Metering mode icon
@@ -570,19 +573,14 @@ void showNDMenu() {
   display.print(F("ND Filter"));
   display.setFont(FONT_H2);
 
-  if (ndIndex > 9) {
-    display.setCursor(10, 50);
-  } else if (ndIndex > 6) {
-    display.setCursor(20, 50);
-  } else if (ndIndex > 3) {
-    display.setCursor(30, 50);
-  } else {
-    display.setCursor(40, 50);
-  }
+  float ndValue = pow(2, ndIndex);
+  // calculate based on the width of the text, where it should be positioned
+  display.setCursor((DISPLAY_WIDTH / 2) - (((numDigits(ndValue) + 2) * 13) / 2), 50);
+
 
   if (ndIndex > 0) {
     display.print(F("ND"));
-    display.print(pow(2, ndIndex), 0);
+    display.print(ndValue, 0);
   } else {
     display.setFont(FONT_H1);
     display.setCursor(10, 50);
