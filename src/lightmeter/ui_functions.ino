@@ -2,34 +2,6 @@ void outOfrange() {
   display.print(F("--"));
 }
 
-// Returns actual value of Vcc (x 100)
-int getBandgap(void) {
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-  // For mega boards
-  const long InternalReferenceVoltage = 1115L;  // Adjust this value to your boards specific internal BG voltage x1000
-  // REFS1 REFS0          --> 0 1, AVcc internal ref. -Selects AVcc reference
-  // MUX4 MUX3 MUX2 MUX1 MUX0  --> 11110 1.1V (VBG)         -Selects channel 30, bandgap voltage, to measure
-  ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (0 << MUX5) | (1 << MUX4) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
-
-#else
-  // For 168/328 boards
-  const long InternalReferenceVoltage = 1056L;  // Adjust this value to your boards specific internal BG voltage x1000
-  // REFS1 REFS0          --> 0 1, AVcc internal ref. -Selects AVcc external reference
-  // MUX3 MUX2 MUX1 MUX0  --> 1110 1.1V (VBG)         -Selects channel 14, bandgap voltage, to measure
-  ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
-
-#endif
-  delay(50);  // Let mux settle a little to get a more stable A/D conversion
-  // Start a conversion
-  ADCSRA |= _BV( ADSC );
-  // Wait for it to complete
-  while ( ( (ADCSRA & (1 << ADSC)) != 0 ) );
-  // Scale the value
-  int results = (((InternalReferenceVoltage * 1024L) / ADC) + 5L) / 10L; // calculates for straight line value
-
-  return results;
-}
-
 // TODO is this still in use?
 void footer() {
   display.setCursor(0, 55);
@@ -206,15 +178,19 @@ void refresh() {
 
   // ND filter indicator
   if (ndIndex > 0) {
-    //display.setDrawColor(WHITE);
     //display.drawLine(0, 55, 128, 55); // LINE DIVISOR
     display.setFont(FONT_STANDARD);
-    display.setCursor(0, 67);
+    display.setCursor(ND_ICON_X, ND_ICON_Y);
     display.print(F("ND"));
     //display.setCursor(100, linePos[0] + 10);
-    display.print(pow(2, ndIndex), 0);
-    display.print(F("="));
+    display.setCursor(ND_VALUE_X, ND_VALUE_Y);
     display.print(ndStop / 10.0, 1);
+    if(ND_VALUE_2_X > -1) {
+      display.setCursor(ND_VALUE_2_X, ND_VALUE_2_Y);
+      display.print(F("("));
+      display.print(pow(2, ndIndex), 0);
+      display.print(F(")"));
+    }
   }
 
   // priority marker (shutter or aperture priority indicator)

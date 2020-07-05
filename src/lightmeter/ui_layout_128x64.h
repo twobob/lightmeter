@@ -33,15 +33,22 @@
 #define T_INDICATOR_X 10
 #define T_INDICATOR_Y 47
 
-#define EV_ICON_X 99
+#define EV_ICON_X 97
 #define EV_ICON_Y 23
-#define EV_VALUE_X 99
+#define EV_VALUE_X 97
 #define EV_VALUE_Y 33
 
-#define EV_SEPARATOR_START_X 94
+#define ND_ICON_X 97
+#define ND_ICON_Y 43
+#define ND_VALUE_X 109
+#define ND_VALUE_Y 43
+#define ND_VALUE_2_X 97
+#define ND_VALUE_2_Y 52
+
+#define EV_SEPARATOR_START_X 93
 #define EV_SEPARATOR_START_Y 16
-#define EV_SEPARATOR_END_X 94
-#define EV_SEPARATOR_END_Y 34
+#define EV_SEPARATOR_END_X 93
+#define EV_SEPARATOR_END_Y 53
 
 #define MENU_ISO_TITLE_X 51
 #define MENU_ISO_TITLE_Y 17
