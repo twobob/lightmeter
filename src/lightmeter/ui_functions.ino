@@ -95,8 +95,9 @@ void refresh() {
   }
   // End of metering mode icon
 
-  display.setCursor(ISO_VALUE_X, ISO_VALUE_Y);
+  display.setCursor(ISO_ICON_X, ISO_ICON_Y);
   display.print(F("ISO:"));
+  display.setCursor(ISO_VALUE_X, ISO_VALUE_Y);
   if (iso > 999999) {
     display.print(iso / 1000000.0, 2);
     display.print(F("M"));
@@ -107,8 +108,9 @@ void refresh() {
     display.print(iso);
   }
 
-  display.setCursor(LX_VALUE_X, LX_VALUE_Y);
+  display.setCursor(LX_ICON_X, LX_ICON_Y);
   display.print(F("lx:"));
+  display.setCursor(LX_VALUE_X, LX_VALUE_Y);
   display.print(lux, 0);
 
   // battery indicator

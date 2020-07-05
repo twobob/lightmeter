@@ -1,16 +1,21 @@
-#define DISPLAY_WIDTH 128
-#define DISPLAY_HEIGHT 64
-
-#define BATTERY_FULL_VALUE 270
-#define BATTERY_EMPTY_VALUE 210
+#define FONT_STANDARD u8g2_font_profont10_mr
+#define FONT_H1 u8g2_font_10x20_mr
+#define FONT_H2 u8g2_font_inb16_mr 
 
 // UI positions
 #define METERING_MODE_X 2
 #define METERING_MODE_Y 8
-#define ISO_VALUE_X 18
+
+#define ISO_ICON_X 18
+#define ISO_ICON_Y 8
+#define ISO_VALUE_X 40
 #define ISO_VALUE_Y 8
-#define LX_VALUE_X 72
+
+#define LX_ICON_X 72
+#define LX_ICON_Y 8
+#define LX_VALUE_X 89
 #define LX_VALUE_Y 8
+
 #define BATTERY_X 121
 #define BATTERY_Y 1
 

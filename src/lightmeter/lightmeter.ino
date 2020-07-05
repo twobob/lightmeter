@@ -66,12 +66,20 @@ double lastBatteryTime = 0;
 
 #define WHITE 1
 
-#define FONT_STANDARD u8g2_font_profont10_mr
-#define FONT_H1 u8g2_font_10x20_mr
-#define FONT_H2 u8g2_font_inb16_mr 
-// 26634 bytes
+#define DISPLAY_WIDTH 128
+//#define DISPLAY_HEIGHT 64
+#define DISPLAY_HEIGHT 32
 
+#if DISPLAY_HEIGHT == 64
 #include "ui_layout_128x64.h"
+#elif DISPLAY_HEIGHT == 32
+#include "ui_layout_128x32.h"
+#endif
+
+#define BATTERY_FULL_VALUE 270
+#define BATTERY_EMPTY_VALUE 210
+
+// 26634 bytes
 
 void SaveSettings() {
   // Save lightmeter setting into EEPROM.
