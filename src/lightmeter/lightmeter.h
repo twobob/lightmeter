@@ -423,13 +423,22 @@ void refresh() {
     Tfr = round(1 / T);
   }
 
-  uint8_t linePos[] = {15, 37};
   display.clear();
 
   display.setFont(FONT_STANDARD);
-  display.setCursor(16, 8);
-  display.print(F("ISO:"));
+  // Metering mode icon
+  display.setCursor(METERING_MODE_X, METERING_MODE_Y);
+  if (meteringMode == 0) {
+    // Ambient light
+    display.print(F("A"));
+  } else if (meteringMode == 1) {
+    // Flash light
+    display.print(F("F"));
+  }
+  // End of metering mode icon
 
+  display.setCursor(ISO_VALUE_X, ISO_VALUE_Y);
+  display.print(F("ISO:"));
   if (iso > 999999) {
     display.print(iso / 1000000.0, 2);
     display.print(F("M"));
@@ -439,11 +448,32 @@ void refresh() {
   } else {
     display.print(iso);
   }
-  display.drawLine(0, 11, 128, 11); // LINE DIVISOR
 
-  display.setCursor(11, linePos[0] + 15);
+  display.setCursor(LX_VALUE_X, LX_VALUE_Y);
+  display.print(F("lx:"));
+  display.print(lux, 0);
+
+  // battery indicator
+  // battery body
+  display.drawFrame(BATTERY_X, BATTERY_Y + 1, 6, 8);
+  // top of battery
+  display.drawLine(BATTERY_X + 2, BATTERY_Y, BATTERY_X + 3, BATTERY_Y);
+
+  // fill the battery indicator according to the measured battery level
+  for (uint8_t i = 0; i <= map(battVolts, BATTERY_EMPTY_VALUE, BATTERY_FULL_VALUE, 0, 6); i++) {
+    if(i > 6){
+      break;
+    }
+    display.drawHLine(BATTERY_X + 1, 8 - i, 4);
+  }
+
+  display.drawLine(HEADER_SEPARATOR_START_X, HEADER_SEPARATOR_START_Y, HEADER_SEPARATOR_END_X, HEADER_SEPARATOR_END_Y); // LINE DIVISOR
+
+  // f value
+  display.setCursor(F_ICON_X, F_ICON_Y);
   display.setFont(FONT_H1);
   display.print(F("f/"));
+  display.setCursor(F_VALUE_X, F_VALUE_Y);
   if (A > 0) {
     if (A >= 100) {
       display.print(A, 0);
@@ -454,66 +484,11 @@ void refresh() {
     outOfrange();
   }
 
-  display.setFont(FONT_STANDARD);
-
-  // battery indicator
-  // battery body
-  display.drawFrame(121, 1, 6, 8);
-  // top of battery
-  display.drawLine(123, 0, 124, 0);
-
-  // fill the battery indicator according to the measured battery level
-  for (uint8_t i = 0; i <= map(battVolts, BATTERY_EMPTY_VALUE, BATTERY_FULL_VALUE, 0, 6); i++) {
-    if(i > 6){
-      break;
-    }
-    display.drawHLine(122, 8 - i, 4);
-  }
-
-  // Metering mode icon
-  display.setCursor(1, 8);
-  if (meteringMode == 0) {
-    // Ambient light
-    display.print(F("A"));
-  } else if (meteringMode == 1) {
-    // Flash light
-    display.print(F("F"));
-  }
-  // End of metering mode icon
-
-  display.setCursor(72, 8);
-  display.print(F("lx:"));
-  display.print(lux, 0);
-
-//  display.setDrawColor(WHITE);
-  display.drawLine(95, linePos[0] - 1, 95, linePos[0] + 18); // LINE DIVISOR
-  display.setFont(FONT_STANDARD);
-  display.setCursor(100, linePos[0] + 7);
-  display.print(F("EV: "));
-  display.setCursor(100, linePos[0] + 17);
-  if (lux > 0) {
-    display.print(EV, 0);
-  } else {
-    display.print(0, 0);
-  }
-
-// ND filter indicator
-  if (ndIndex > 0) {
-    //display.setDrawColor(WHITE);
-    //display.drawLine(0, 55, 128, 55); // LINE DIVISOR
-    display.setFont(FONT_STANDARD);
-    display.setCursor(0, 67);
-    display.print(F("ND"));
-    //display.setCursor(100, linePos[0] + 10);
-    display.print(pow(2, ndIndex), 0);
-    display.print(F("="));
-    display.print(ndStop / 10.0, 1);
-  }
-
+  // Time value
   display.setFont(FONT_H1);
-  display.setCursor(12, linePos[1] + 15);
+  display.setCursor(T_ICON_X, T_ICON_Y);
   display.print(F("T:"));
-
+  display.setCursor(T_VALUE_X, T_VALUE_Y);
   if (Tdisplay == 0) {
     display.print(Tmin, 1);
     display.print(F("m"));
@@ -531,9 +506,39 @@ void refresh() {
     outOfrange();
   }
 
+  // EV
+  display.drawLine(EV_SEPARATOR_START_X, EV_SEPARATOR_START_Y, EV_SEPARATOR_END_X, EV_SEPARATOR_END_Y); // LINE DIVISOR
+  display.setFont(FONT_STANDARD);
+  display.setCursor(EV_ICON_X, EV_ICON_Y);
+  display.print(F("EV: "));
+  display.setCursor(EV_VALUE_X, EV_VALUE_Y);
+  if (lux > 0) {
+    display.print(EV, 0);
+  } else {
+    display.print(0, 0);
+  }
+
+  // ND filter indicator
+  if (ndIndex > 0) {
+    //display.setDrawColor(WHITE);
+    //display.drawLine(0, 55, 128, 55); // LINE DIVISOR
+    display.setFont(FONT_STANDARD);
+    display.setCursor(0, 67);
+    display.print(F("ND"));
+    //display.setCursor(100, linePos[0] + 10);
+    display.print(pow(2, ndIndex), 0);
+    display.print(F("="));
+    display.print(ndStop / 10.0, 1);
+  }
+
   // priority marker (shutter or aperture priority indicator)
   display.setFont(FONT_STANDARD);
-  display.setCursor(2, linePos[modeIndex] + 12);
+  if(modeIndex == 1) {
+    display.setCursor(F_INDICATOR_X, F_INDICATOR_Y);
+  }
+  else {
+    display.setCursor(T_INDICATOR_X, T_INDICATOR_Y);
+  }
   display.print(F("*"));
 
   display.sendBuffer();
@@ -546,14 +551,14 @@ void showISOMenu() {
 
   display.clear();
   display.setFont(FONT_H1);
-  display.setCursor(50, 14);
+  display.setCursor(MENU_ISO_TITLE_X, MENU_ISO_TITLE_Y);
   display.print(F("ISO"));
   display.setFont(FONT_H2);
 
   // get the actual iso value based on the index
   long iso = getISOByIndex(ISOIndex);
   // calculate based on the width of the text, where it should be positioned
-  display.setCursor((DISPLAY_WIDTH / 2) - ((numDigits(iso) * 13) / 2), 50);
+  display.setCursor((DISPLAY_WIDTH / 2) - ((numDigits(iso) * 13) / 2), MENU_ISO_VALUE_Y);
 
   display.print(iso);
 
@@ -569,13 +574,13 @@ void showNDMenu() {
   display.clear();
   //display.clearDisplay();
   display.setFont(FONT_H1);
-  display.setCursor(10, 14);
+  display.setCursor(MENU_ND_TITLE_X, MENU_ND_TITLE_Y);
   display.print(F("ND Filter"));
   display.setFont(FONT_H2);
 
   float ndValue = pow(2, ndIndex);
   // calculate based on the width of the text, where it should be positioned
-  display.setCursor((DISPLAY_WIDTH / 2) - (((numDigits(ndValue) + 2) * 13) / 2), 50);
+  display.setCursor((DISPLAY_WIDTH / 2) - (((numDigits(ndValue) + 2) * 13) / 2), MENU_ND_VALUE_Y);
 
 
   if (ndIndex > 0) {
