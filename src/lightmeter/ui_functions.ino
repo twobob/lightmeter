@@ -8,6 +8,92 @@ void footer() {
   display.print(F("press M"));
 }
 
+/**
+ * Displays the shutter speed based on the time value
+ */
+void DisplayTime(float T) {
+  display.setFont(FONT_H1);
+  display.setCursor(T_ICON_X, T_ICON_Y);
+  display.print(F("T"));
+  display.setCursor(T_VALUE_X, T_VALUE_Y);
+
+  if (T > 0) {
+    // there is place for 4 digits, or 3 digits and a letter
+    if (T >= 60 && T <= 59940) {
+      // minutes
+      float val = T / 60.0;
+      display.print(val, 0);
+      display.print(F("m"));
+      if (val < 10) {
+        uint8_t mod = (uint8_t)T % 60;
+        if (mod > 0) {
+          display.print(mod);
+          display.print(F("s"));
+        }
+      }
+    }
+    else if (T < 60 && T >= 0.5) {
+      // seconds
+      display.print(T, (T < 10)? 1 : 0);
+      display.print(F("s"));
+    }
+    else if (T < 0.5) {
+      // Exposure is in fractional form
+      display.print(F("1/"));
+      uint8_t val = round(1 / T);
+      // TODO make text shorter by adding "K"
+      display.print(val);
+    }
+    else {
+      //outOfrange();
+      display.print(F("inf"));
+    }
+  }
+  else {
+    outOfrange();
+  }
+}
+
+void DisplayAperture(float A) {
+  display.setCursor(F_ICON_X, F_ICON_Y);
+  display.setFont(FONT_H1);
+  display.print(F("f"));
+  display.setCursor(F_VALUE_X, F_VALUE_Y);
+  if (A > 0) {
+    if (A >= 100) {
+      display.print(A, 0);
+    } else {
+      display.print(A, 1);
+    }
+  } else {
+    outOfrange();
+  }
+}
+
+void DisplayNDFilter() {
+  uint8_t ndStop = getND(ndIndex);
+  display.setFont(FONT_STANDARD);
+  display.setCursor(ND_ICON_X, ND_ICON_Y);
+  display.print(F("ND"));
+
+  if (ndIndex > 0) {
+    display.setCursor(ND_VALUE_X, ND_VALUE_Y);
+    display.print(ndStop / 10.0, 1);
+    
+    // second line of ND data
+    if (ND_VALUE_2_X > -1) {
+      display.setCursor(ND_VALUE_2_X, ND_VALUE_2_Y);
+      display.print(F("("));
+      display.print(pow(2, ndIndex), 0);
+      display.print(F(")"));
+    }
+  }
+  else {
+    // no nd filter selected
+    outOfrange();
+  }
+}
+
 // Calculate new exposure value and display it.
 void refresh() {
   ISOMenu = false;
@@ -19,8 +105,6 @@ void refresh() {
   float T = getTimeByIndex(T_expIndex);
   float A = getApertureByIndex(apertureIndex);
   long  iso = getISOByIndex(ISOIndex);
-
-  uint8_t ndStop = getND(ndIndex);
 
   // if ND filter is configured then make corrections.
   // As ISO is a main operand in all EV calculations we can adjust ISO by ND filter factor.
@@ -65,22 +149,6 @@ void refresh() {
     }
   }
 
-  uint8_t Tdisplay = 0; // Flag for shutter speed display style (fractional, seconds, minutes)
-  double  Tfr = 0;
-  float   Tmin = 0;
-
-  if (T >= 60) {
-    Tdisplay = 0;  // Exposure is in minutes
-    Tmin = T / 60;
-
-  } else if (T < 60 && T >= 0.5) {
-    Tdisplay = 2;  // Exposure in in seconds
-
-  } else if (T < 0.5) {
-    Tdisplay = 1;  // Exposure is in fractional form
-    Tfr = round(1 / T);
-  }
-
   display.clear();
 
   display.setFont(FONT_STANDARD);
@@ -121,50 +189,19 @@ void refresh() {
 
   // fill the battery indicator according to the measured battery level
   for (uint8_t i = 0; i <= map(battVolts, BATTERY_EMPTY_VALUE, BATTERY_FULL_VALUE, 0, 6); i++) {
-    if(i > 6){
+    if (i > 6) {
       break;
     }
-    display.drawHLine(BATTERY_X + 1, 8 - i, 4);
+    display.drawHLine(BATTERY_X + 1, BATTERY_Y + 8 - i, 4);
   }
 
   display.drawLine(HEADER_SEPARATOR_START_X, HEADER_SEPARATOR_START_Y, HEADER_SEPARATOR_END_X, HEADER_SEPARATOR_END_Y); // LINE DIVISOR
 
   // f value
-  display.setCursor(F_ICON_X, F_ICON_Y);
-  display.setFont(FONT_H1);
-  display.print(F("f/"));
-  display.setCursor(F_VALUE_X, F_VALUE_Y);
-  if (A > 0) {
-    if (A >= 100) {
-      display.print(A, 0);
-    } else {
-      display.print(A, 1);
-    }
-  } else {
-    outOfrange();
-  }
+  DisplayAperture(A);
 
   // Time value
-  display.setFont(FONT_H1);
-  display.setCursor(T_ICON_X, T_ICON_Y);
-  display.print(F("T:"));
-  display.setCursor(T_VALUE_X, T_VALUE_Y);
-  if (Tdisplay == 0) {
-    display.print(Tmin, 1);
-    display.print(F("m"));
-  } else if (Tdisplay == 1) {
-    if (T > 0) {
-      display.print(F("1/"));
-      display.print(Tfr, 0);
-    } else {
-      outOfrange();
-    }
-  } else if (Tdisplay == 2) {
-    display.print(T, 1);
-    display.print(F("s"));
-  } else if (Tdisplay == 3) {
-    outOfrange();
-  }
+  DisplayTime(T);
 
   // EV
   display.drawLine(EV_SEPARATOR_START_X, EV_SEPARATOR_START_Y, EV_SEPARATOR_END_X, EV_SEPARATOR_END_Y); // LINE DIVISOR
@@ -179,25 +216,11 @@ void refresh() {
   }
 
   // ND filter indicator
-  if (ndIndex > 0) {
-    //display.drawLine(0, 55, 128, 55); // LINE DIVISOR
-    display.setFont(FONT_STANDARD);
-    display.setCursor(ND_ICON_X, ND_ICON_Y);
-    display.print(F("ND"));
-    //display.setCursor(100, linePos[0] + 10);
-    display.setCursor(ND_VALUE_X, ND_VALUE_Y);
-    display.print(ndStop / 10.0, 1);
-    if(ND_VALUE_2_X > -1) {
-      display.setCursor(ND_VALUE_2_X, ND_VALUE_2_Y);
-      display.print(F("("));
-      display.print(pow(2, ndIndex), 0);
-      display.print(F(")"));
-    }
-  }
+  DisplayNDFilter();
 
   // priority marker (shutter or aperture priority indicator)
   display.setFont(FONT_STANDARD);
-  if(modeIndex == 1) {
+  if (modeIndex == 0) {
     display.setCursor(F_INDICATOR_X, F_INDICATOR_Y);
   }
   else {
