@@ -1,3 +1,10 @@
+/* TODO
+ *  - ISO value too long in the 128x32 display size
+ *  - 3rd separator
+ *  - T values increment strangely
+ *  - buzzer moe
+*/
+
 #include <Wire.h>
 #include <BH1750.h>
 #include <EEPROM.h>
@@ -5,6 +12,9 @@
 #include <U8g2lib.h>
 
 U8G2_SH1106_128X64_NONAME_F_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+#define DISPLAY_WIDTH 128
+//#define DISPLAY_HEIGHT 64
+#define DISPLAY_HEIGHT 32
 
 BH1750 lightMeter;
 
@@ -65,10 +75,6 @@ int battVolts;
 double lastBatteryTime = 0;
 
 #define WHITE 1
-
-#define DISPLAY_WIDTH 128
-//#define DISPLAY_HEIGHT 64
-#define DISPLAY_HEIGHT 32
 
 #if DISPLAY_HEIGHT == 64
 #include "ui_layout_128x64.h"
