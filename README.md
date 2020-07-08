@@ -7,11 +7,11 @@ TODO update this!
  - [ ] Investigate: why does it take 2 measures in ambient mode to get the actual result?
  - [x] Refactor the code - so it is easier to do the next step
  - [x] Modify the code, to work with 128x32 displays
- - ~~[ ] Find a solution to get rid of the arduino nano, and be more power efficient, and use rechargeable batteries (1.2V) ( + boost regulator)~~
- - [ ] Make the whole thing take up less space and RAM and program space
-  - [x] Use the single/double buffer mode
-  - [ ] Use custom fonts, and restrict them to the minimum number of characters needed (possibly numbers only)
+ - ~~[ ] Find a solution to get rid of the arduino nano, and be more power efficient, and use rechargeable batteries (1.2V) ( + boost regulator)~~ (see note 1.)
+ - [ ] Make the whole thing take up less space and RAM (currently ~26600bytes and ~1760bytes)
+  - [x] Use the single/double buffer mode (with double buffer mode ~1000bytes - see note 2.)
   - [ ] Use bitmaps insted of text where applicable (this helps to use smaller font set)
+  - [ ] Use custom fonts, and restrict them to the minimum number of characters needed (possibly numbers only)
  - [ ] New feature: fixed aperture size, fixed iso, fixed timing: indicate that you need a flash, or how dark will the picture be (for low end cameras)
  - [ ] update the readme with the updated description, components and feature list. Also add credits to the original author!
  - [ ] modify getBandgap() for the new board and schematic
@@ -20,8 +20,8 @@ TODO update this!
  - [ ] Draw new schematic diagram
 
 ## Notes
- - I was aiming to use an attiny45/85 (or something along these lines), but even the u8x8 lib uses ~430bytes of RAM, and that is a bit too much for a device that has 512bytes. I could have used my own [SH1106Lib](https://github.com/notisrac/SH1106Lib) (that is the display I am using) as it uses much less mem, but then we would have lost the ability to use any display you wanted. So I'm now using an Arduino Pro Mini clone.
- - Currently using double buffer mode. Speed is pretty good, RAM used is less than 1k. There is no need to use full buffer mode.
+ 1. I was aiming to use an attiny45/85 (or something along these lines), but even the u8x8 lib uses ~430bytes of RAM, and that is a bit too much for a device that has 512bytes. I could have used my own [SH1106Lib](https://github.com/notisrac/SH1106Lib) (that is the display I am using) as it uses much less mem, but then we would have lost the ability to use any display you wanted. So I'm now using an Arduino Pro Mini clone.
+ 2. Currently using double buffer mode. Speed is pretty good, RAM used is less than 1k. There is no need to use full buffer mode.
 
 ## Components:
 TODO update this list:

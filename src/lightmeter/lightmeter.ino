@@ -154,7 +154,7 @@ void setup() {
   //lightMeter.begin(BH1750::ONE_TIME_LOW_RES_MODE); // for low resolution but 16ms light measurement time.
 
   display.begin();
-  display.setFont(WHITE);
+  display.setFont(FONT_STANDARD);
   display.clear();
 
 
