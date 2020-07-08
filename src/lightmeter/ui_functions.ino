@@ -225,42 +225,45 @@ void refresh() {
     }
   }
 
-  display.clearBuffer();
+  display.firstPage();
+  do {
+    display.clearBuffer();
+  
+    // metering mode icon
+    DisplayMeteringMode(meteringMode);
+  
+    // current iso value
+    DisplayISO(iso);
+  
+    // current lux value
+    DisplayLux(lux);
+  
+    // battery indicator
+    DisplayBatteryIndicator(battVolts);
+  
+    display.drawLine(HEADER_SEPARATOR_START_X, HEADER_SEPARATOR_START_Y, HEADER_SEPARATOR_END_X, HEADER_SEPARATOR_END_Y); // LINE DIVISOR
+  
+    // f value
+    DisplayAperture(A);
+  
+    // Time value
+    DisplayTime(T);
+  
+    display.drawLine(EV_SEPARATOR_START_X, EV_SEPARATOR_START_Y, EV_SEPARATOR_END_X, EV_SEPARATOR_END_Y); // LINE DIVISOR
+  
+    // EV
+    DisplayEV(lux, EV);
+  
+    display.drawLine(SEPARATOR_3_START_X, SEPARATOR_3_START_Y, SEPARATOR_3_END_X, SEPARATOR_3_END_Y); // LINE DIVISOR
+  
+    // ND filter indicator
+    DisplayNDFilter();
+  
+    // priority marker (shutter or aperture priority indicator)
+    DisplayPriorityIndicator(modeIndex);
+  } while ( display.nextPage() );
 
-  // metering mode icon
-  DisplayMeteringMode(meteringMode);
-
-  // current iso value
-  DisplayISO(iso);
-
-  // current lux value
-  DisplayLux(lux);
-
-  // battery indicator
-  DisplayBatteryIndicator(battVolts);
-
-  display.drawLine(HEADER_SEPARATOR_START_X, HEADER_SEPARATOR_START_Y, HEADER_SEPARATOR_END_X, HEADER_SEPARATOR_END_Y); // LINE DIVISOR
-
-  // f value
-  DisplayAperture(A);
-
-  // Time value
-  DisplayTime(T);
-
-  display.drawLine(EV_SEPARATOR_START_X, EV_SEPARATOR_START_Y, EV_SEPARATOR_END_X, EV_SEPARATOR_END_Y); // LINE DIVISOR
-
-  // EV
-  DisplayEV(lux, EV);
-
-  display.drawLine(SEPARATOR_3_START_X, SEPARATOR_3_START_Y, SEPARATOR_3_END_X, SEPARATOR_3_END_Y); // LINE DIVISOR
-
-  // ND filter indicator
-  DisplayNDFilter();
-
-  // priority marker (shutter or aperture priority indicator)
-  DisplayPriorityIndicator(modeIndex);
-
-  display.sendBuffer();
+  //display.sendBuffer();
 }
 
 void showISOMenu() {
@@ -268,17 +271,20 @@ void showISOMenu() {
   NDMenu = false;
   mainScreen = false;
 
-  display.clearBuffer();
-  display.setFont(FONT_H1);
-  display.setCursor(MENU_ISO_TITLE_X, MENU_ISO_TITLE_Y);
-  display.print(MENU_ISO_TITLE_TEXT);
-  display.setFont(FONT_H2);
+  display.firstPage();
+  do {
+    display.clearBuffer();
+    display.setFont(FONT_H1);
+    display.setCursor(MENU_ISO_TITLE_X, MENU_ISO_TITLE_Y);
+    display.print(MENU_ISO_TITLE_TEXT);
+    display.setFont(FONT_H2);
+  
+    display.setCursor(MENU_ISO_VALUE_X, MENU_ISO_VALUE_Y);
+    // get the actual iso value based on the index
+    display.print(getISOByIndex(ISOIndex));
 
-  display.setCursor(MENU_ISO_VALUE_X, MENU_ISO_VALUE_Y);
-  // get the actual iso value based on the index
-  display.print(getISOByIndex(ISOIndex));
-
-  display.sendBuffer();
+  //display.sendBuffer();
+  } while ( display.nextPage() );
   delay(200);
 }
 
@@ -287,6 +293,8 @@ void showNDMenu() {
   mainScreen = false;
   NDMenu = true;
 
+  display.firstPage();
+  do {
   display.clearBuffer();
   //display.clearDisplay();
   display.setFont(FONT_H1);
@@ -304,7 +312,8 @@ void showNDMenu() {
     display.print(F("No filter"));
   }
 
-  display.sendBuffer();
+  //display.sendBuffer();
+  } while ( display.nextPage() );
   delay(200);
 }
 

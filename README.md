@@ -5,21 +5,23 @@ TODO update this!
 # Task list
  - [x] Rewrite the code to use u8g2 instead of the Adafruit lib
  - [ ] Investigate: why does it take 2 measures in ambient mode to get the actual result?
- - [ ] Refactor the code - so it is easier to do the next step
- - [ ] Modify the code, to work with 128x32 displays
-- [ ] Find a solution to get rid of the arduino nano, and be more power efficient, and use rechargeable batteries (1.2V) ( + boost regulator)
-- [ ] Draw new schematic diagram
-- [ ] Make the whole thing take up less space and RAM
- - [ ] Use the single buffer mode
- - [ ] Use custom fonts, and restrict them to the minimum number of characters needed (possibly numbers only)
- - [ ] Use bitmaps insted of text where applicable (this helps use tighter font set)
-- [ ] New mode: fixed aperture size, fixed iso, fixed timing: indicate that you need a flash, or how dark will the picture be (for low end cameras)
-- [ ] update the readme with the updated description, components and feature list. Also add credits to the original author!
-[ ] fix getBandgap() for the new board
-[ ] modify the schematic to have the buttons take up less pins
+ - [x] Refactor the code - so it is easier to do the next step
+ - [x] Modify the code, to work with 128x32 displays
+ - ~~[ ] Find a solution to get rid of the arduino nano, and be more power efficient, and use rechargeable batteries (1.2V) ( + boost regulator)~~
+ - [ ] Make the whole thing take up less space and RAM and program space
+  - [x] Use the single/double buffer mode
+  - [ ] Use custom fonts, and restrict them to the minimum number of characters needed (possibly numbers only)
+  - [ ] Use bitmaps insted of text where applicable (this helps to use smaller font set)
+ - [ ] New feature: fixed aperture size, fixed iso, fixed timing: indicate that you need a flash, or how dark will the picture be (for low end cameras)
+ - [ ] update the readme with the updated description, components and feature list. Also add credits to the original author!
+ - [ ] modify getBandgap() for the new board and schematic
+ - [ ] modify the schematic to have the buttons take up less pins
+ - [ ] New feature: kitchen timer functionality: add a buzzer, and add code to count down the measured time for bulb mode photography
+ - [ ] Draw new schematic diagram
 
 ## Notes
  - I was aiming to use an attiny45/85 (or something along these lines), but even the u8x8 lib uses ~430bytes of RAM, and that is a bit too much for a device that has 512bytes. I could have used my own [SH1106Lib](https://github.com/notisrac/SH1106Lib) (that is the display I am using) as it uses much less mem, but then we would have lost the ability to use any display you wanted. So I'm now using an Arduino Pro Mini clone.
+ - Currently using double buffer mode. Speed is pretty good, RAM used is less than 1k. There is no need to use full buffer mode.
 
 ## Components:
 TODO update this list:
