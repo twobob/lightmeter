@@ -11,20 +11,23 @@
 #include <avr/sleep.h>
 #include <U8g2lib.h>
 
-U8G2_SH1106_128X64_NONAME_2_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+//U8G2_SH1106_128X64_NONAME_2_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+U8G2_SSD1306_128X32_UNIVISION_2_HW_I2C display(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
 #define DISPLAY_WIDTH 128
-#define DISPLAY_HEIGHT 64
-//#define DISPLAY_HEIGHT 32
+//#define DISPLAY_HEIGHT 64
+#define DISPLAY_HEIGHT 32
 
 BH1750 lightMeter;
 
 #define DomeMultiplier          2.17                    // Multiplier when using a white translucid Dome covering the lightmeter
-#define MeteringButtonPin       2                       // Metering button pin
-#define PlusButtonPin           3                       // Plus button pin
-#define MinusButtonPin          4                       // Minus button pin
-#define ModeButtonPin           5                       // Mode button pin
-#define MenuButtonPin           6                       // ISO button pin
-#define MeteringModeButtonPin   7                       // Metering Mode (Ambient / Flash)
+#define MeteringButtonPin       3                       // Metering button pin
+#define PlusButtonPin           8                       // Plus button pin
+#define MinusButtonPin          9                       // Minus button pin
+#define ModeButtonPin           7                       // Mode button pin
+#define MenuButtonPin           2                       // ISO button pin
+#define MeteringModeButtonPin   6                       // Metering Mode (Ambient / Flash)
+#define BuzzerPin               5                       // Buzzer (speaker) pin
+#define BatterVoltagePin        A0                      // Pin for measuring of the battery voltage
 //#define PowerButtonPin          2
 
 #define MaxISOIndex             57
@@ -34,10 +37,10 @@ BH1750 lightMeter;
 #define MaxFlashMeteringTime    5000                    // ms
 
 float   lux;
-boolean Overflow = 0;                                   // Sensor got Saturated and Display "Overflow"
+boolean Overflow = false;                                   // Sensor got Saturated and Display "Overflow"
 float   ISOND;
-boolean ISOmode = 0;
-boolean NDmode = 0;
+boolean ISOmode = false;
+boolean NDmode = false;
 
 boolean PlusButtonState;                // "+" button state
 boolean MinusButtonState;               // "-" button state
@@ -70,9 +73,9 @@ uint8_t modeIndex =         EEPROM.read(modeIndexAddr);
 uint8_t meteringMode =      EEPROM.read(meteringModeAddr);
 uint8_t ndIndex =           EEPROM.read(ndIndexAddr);
 
-int battVolts;
+uint8_t battVolts;
 #define batteryInterval 10000
-double lastBatteryTime = 0;
+unsigned long lastBatteryTime = 0;
 
 #define WHITE 1
 
@@ -82,8 +85,8 @@ double lastBatteryTime = 0;
 #include "ui_layout_128x32.h"
 #endif
 
-#define BATTERY_FULL_VALUE 270
-#define BATTERY_EMPTY_VALUE 210
+#define BATTERY_FULL_VALUE 90
+#define BATTERY_EMPTY_VALUE 65
 
 // 26634 bytes
 
@@ -109,34 +112,6 @@ void readButtons() {
   MeteringModeButtonState = digitalRead(MeteringModeButtonPin);
 }
 
-// Returns actual value of Vcc (x 100)
-int getBandgap(void) {
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-  // For mega boards
-  const long InternalReferenceVoltage = 1115L;  // Adjust this value to your boards specific internal BG voltage x1000
-  // REFS1 REFS0          --> 0 1, AVcc internal ref. -Selects AVcc reference
-  // MUX4 MUX3 MUX2 MUX1 MUX0  --> 11110 1.1V (VBG)         -Selects channel 30, bandgap voltage, to measure
-  ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (0 << MUX5) | (1 << MUX4) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
-
-#else
-  // For 168/328 boards
-  const long InternalReferenceVoltage = 1056L;  // Adjust this value to your boards specific internal BG voltage x1000
-  // REFS1 REFS0          --> 0 1, AVcc internal ref. -Selects AVcc external reference
-  // MUX3 MUX2 MUX1 MUX0  --> 1110 1.1V (VBG)         -Selects channel 14, bandgap voltage, to measure
-  ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
-
-#endif
-  delay(50);  // Let mux settle a little to get a more stable A/D conversion
-  // Start a conversion
-  ADCSRA |= _BV( ADSC );
-  // Wait for it to complete
-  while ( ( (ADCSRA & (1 << ADSC)) != 0 ) );
-  // Scale the value
-  int results = (((InternalReferenceVoltage * 1024L) / ADC) + 5L) / 10L; // calculates for straight line value
-
-  return results;
-}
-
 void setup() {  
   pinMode(PlusButtonPin, INPUT_PULLUP);
   pinMode(MinusButtonPin, INPUT_PULLUP);
@@ -144,10 +119,11 @@ void setup() {
   pinMode(ModeButtonPin, INPUT_PULLUP);
   pinMode(MenuButtonPin, INPUT_PULLUP);
   pinMode(MeteringModeButtonPin, INPUT_PULLUP);
+  //pinMode(BuzzerPin, OUTPUT);
 
   //Serial.begin(115200);
 
-  battVolts = getBandgap();  //Determins what actual Vcc is, (X 100), based on known bandgap voltage
+  battVolts = readBatteryLevel();
 
   Wire.begin();
   lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE_2);
@@ -191,7 +167,7 @@ void setup() {
 void loop() {  
     if (millis() >= lastBatteryTime + batteryInterval) {
       lastBatteryTime = millis();
-      battVolts = getBandgap();
+      battVolts = readBatteryLevel();
     }
     
     readButtons();
