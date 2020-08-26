@@ -1,6 +1,7 @@
 /*
   Get light value
 */
+// float getLux(BH1750::Mode meteringMode, uint8_t count, uint8_t mtreg = 69) {
 float getLux() {
   uint16_t lux = lightMeter.readLightLevel(false);
 

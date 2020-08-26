@@ -4,7 +4,7 @@ TODO update this!
 
 # Task list
  - [x] Rewrite the code to use u8g2 instead of the Adafruit lib
- - [ ] Investigate: why does it take 2 measures in ambient mode to get the actual result?
+ - [ ] Investigate: why does it take 2 measures in ambient mode to get the actual result? (can the high res mode be used all the time?)
  - [x] Refactor the code - so it is easier to do the next step
  - [x] Modify the code, to work with 128x32 displays
  - ~~[ ] Find a solution to get rid of the arduino nano, and be more power efficient, and use rechargeable batteries (1.2V) ( + boost regulator)~~ (see note 1.)
@@ -12,11 +12,11 @@ TODO update this!
   - [x] Use the single/double buffer mode (with double buffer mode ~1000bytes - see note 2.)
   - [ ] Use bitmaps insted of text where applicable (this helps to use smaller font set)
   - [ ] Use custom fonts, and restrict them to the minimum number of characters needed (possibly numbers only)
- - [ ] New feature: fixed aperture size, fixed iso, fixed timing: indicate that you need a flash, or how dark will the picture be (for low end cameras)
  - [ ] update the readme with the updated description, components and feature list. Also add credits to the original author!
- - [ ] modify getBandgap() for the new board and schematic
+ - [x] modify getBandgap() for the new board and schematic
  - [ ] modify the schematic to have the buttons take up less pins
  - [ ] New feature: kitchen timer functionality: add a buzzer, and add code to count down the measured time for bulb mode photography
+ - [ ] Indicate when the device is measuring - display a "measuring..." or similar text
  - [ ] Draw new schematic diagram
 
 ## Notes

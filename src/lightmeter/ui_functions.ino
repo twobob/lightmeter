@@ -172,9 +172,9 @@ void DisplayISO(long iso) {
 
 // Calculate new exposure value and display it.
 void refresh() {
-  ISOMenu = false;
-  mainScreen = true;
-  NDMenu = false;
+//  ISOMenu = false;
+//  mainScreen = true;
+//  NDMenu = false;
 
   float EV = lux2ev(lux);
 
@@ -225,9 +225,9 @@ void refresh() {
     }
   }
 
-  display.firstPage();
-  do {
-    display.clearBuffer();
+//  display.firstPage();
+//  do {
+//    display.clearBuffer();
   
     // metering mode icon
     DisplayMeteringMode(meteringMode);
@@ -261,19 +261,19 @@ void refresh() {
   
     // priority marker (shutter or aperture priority indicator)
     DisplayPriorityIndicator(modeIndex);
-  } while ( display.nextPage() );
+//  } while ( display.nextPage() );
 
   //display.sendBuffer();
 }
 
 void showISOMenu() {
-  ISOMenu = true;
-  NDMenu = false;
-  mainScreen = false;
+//  ISOMenu = true;
+//  NDMenu = false;
+//  mainScreen = false;
 
-  display.firstPage();
-  do {
-    display.clearBuffer();
+//  display.firstPage();
+//  do {
+//    display.clearBuffer();
     display.setFont(FONT_H1);
     display.setCursor(MENU_ISO_TITLE_X, MENU_ISO_TITLE_Y);
     display.print(MENU_ISO_TITLE_TEXT);
@@ -284,18 +284,17 @@ void showISOMenu() {
     display.print(getISOByIndex(ISOIndex));
 
   //display.sendBuffer();
-  } while ( display.nextPage() );
-  delay(200);
+//  } while ( display.nextPage() );
 }
 
 void showNDMenu() {
-  ISOMenu = false;
-  mainScreen = false;
-  NDMenu = true;
+//  ISOMenu = false;
+//  mainScreen = false;
+//  NDMenu = true;
 
-  display.firstPage();
-  do {
-  display.clearBuffer();
+//  display.firstPage();
+//  do {
+//  display.clearBuffer();
   //display.clearDisplay();
   display.setFont(FONT_H1);
   display.setCursor(MENU_ND_TITLE_X, MENU_ND_TITLE_Y);
@@ -313,130 +312,171 @@ void showNDMenu() {
   }
 
   //display.sendBuffer();
-  } while ( display.nextPage() );
-  delay(200);
+//  } while ( display.nextPage() );
+}
+
+void showDebugMenu() {
+//  ISOMenu = false;
+//  mainScreen = false;
+//  NDMenu = true;
+
+//  display.firstPage();
+//  do {
+//  display.clearBuffer();
+
+  //display.clearDisplay();
+  display.setFont(FONT_H1);
+  display.setCursor(MENU_DEBUG_TITLE_X, MENU_DEBUG_TITLE_Y);
+  display.print(MENU_DEBUG_TITLE_TEXT);
+  display.setFont(FONT_H2);
+
+  display.setCursor(MENU_DEBUG_VALUE_X, MENU_DEBUG_VALUE_Y);
+
+//  if (ndIndex > 0) {
+//    display.print(F("ND"));
+//    display.print(pow(2, ndIndex), 0);
+//  } else {
+//    display.setFont(FONT_H1);
+//    display.print(F("No filter"));
+//  }
+
+  //display.sendBuffer();
+//  } while ( display.nextPage() );
 }
 
 // Navigation menu
 void menu() {
-  if (MenuButtonState == 0) {
-    if (mainScreen) {
-      showISOMenu();
-    } else if (ISOMenu) {
-      showNDMenu();
-    } else {
-      refresh();
-      delay(200);
+
+    switch (currentMenuItem) {
+      case main:
+        refresh();
+        break;
+      case iso:
+        showISOMenu();
+        break;
+      case nd:
+        showNDMenu();
+        break;
+      case debug:
+        showDebugMenu();
+        break;
+      case none:
+        currentMenuItem = 0;
+        break;
     }
-  }
-
-  if (NDMenu) {
-    if (PlusButtonState == 0) {
-      ndIndex++;
-
-      if (ndIndex > MaxNDIndex) {
-        ndIndex = 0;
-      }
-    } else if (MinusButtonState == 0) {
-      if (ndIndex <= 0) {
-        ndIndex = MaxNDIndex;
-      } else {
-        ndIndex--;
-      }
-    }
-
-    if (PlusButtonState == 0 || MinusButtonState == 0) {
-      showNDMenu();
-    }
-  }
-
-  if (ISOMenu) {
-    // ISO change mode
-    if (PlusButtonState == 0) {
-      // increase ISO
-      ISOIndex++;
-
-      if (ISOIndex > MaxISOIndex) {
-        ISOIndex = 0;
-      }
-    } else if (MinusButtonState == 0) {
-      if (ISOIndex > 0) {
-        ISOIndex--;
-      } else {
-        ISOIndex = MaxISOIndex;
-      }
-    }
-
-    if (PlusButtonState == 0 || MinusButtonState == 0) {
-      showISOMenu();
-    }
-  }
-
-  if (ModeButtonState == 0) {
-    // switching between Aperture priority and Shutter Speed priority.
-    if (mainScreen) {
-      modeIndex++;
-
-      if (modeIndex > 1) {
-        modeIndex = 0;
-      }
-    }
-
-    refresh();
-    delay(200);
-  }
-
-  if (mainScreen && MeteringModeButtonState == 0) {
-    // Switch between Ambient light and Flash light metering
-    if (meteringMode == 0) {
-      meteringMode = 1;
-    } else {
-      meteringMode = 0;
-    }
-
-    refresh();
-    delay(200);
-  }
-
-  if (mainScreen && (PlusButtonState == 0 || MinusButtonState == 0)) {
-    if (modeIndex == 0) {
-      // Aperture priority mode
-      if (PlusButtonState == 0) {
-        // Increase aperture.
-        apertureIndex++;
-
-        if (apertureIndex > MaxApertureIndex) {
-          apertureIndex = 0;
-        }
-      } else if (MinusButtonState == 0) {
-        // Decrease aperture
-        if (apertureIndex > 0) {
-          apertureIndex--;
-        } else {
-          apertureIndex = MaxApertureIndex;
-        }
-      }
-    } else if (modeIndex == 1) {
-      // Time priority mode
-      if (PlusButtonState == 0) {
-        // increase time
-        T_expIndex++;
-
-        if (T_expIndex > MaxTimeIndex) {
-          T_expIndex = 0;
-        }
-      } else if (MinusButtonState == 0) {
-        // decrease time
-        if (T_expIndex > 0) {
-          T_expIndex--;
-        } else {
-          T_expIndex = MaxTimeIndex;
-        }
-      }
-    }
-
-    delay(200);
-
-    refresh();
-  }
+  
+//  if (MenuButtonState) {
+//    currentMenuItem = currentMenuItem + 1;
+//    delay(200);
+//  }
+//
+//  if (currentMenuItem == nd) {
+//    if (PlusButtonState) {
+//      ndIndex++;
+//
+//      if (ndIndex > MaxNDIndex) {
+//        ndIndex = 0;
+//      }
+//    } else if (MinusButtonState) {
+//      if (ndIndex <= 0) {
+//        ndIndex = MaxNDIndex;
+//      } else {
+//        ndIndex--;
+//      }
+//    }
+////
+////    if (PlusButtonState || MinusButtonState) {
+////      showNDMenu();
+////    }
+//  }
+//
+//  if (currentMenuItem == iso) {
+//    // ISO change mode
+//    if (PlusButtonState) {
+//      // increase ISO
+//      ISOIndex++;
+//
+//      if (ISOIndex > MaxISOIndex) {
+//        ISOIndex = 0;
+//      }
+//    } else if (MinusButtonState) {
+//      if (ISOIndex > 0) {
+//        ISOIndex--;
+//      } else {
+//        ISOIndex = MaxISOIndex;
+//      }
+//    }
+//
+////    if (PlusButtonState || MinusButtonState) {
+////      showISOMenu();
+////    }
+//  }
+//
+//  if (ModeButtonState) {
+//    // switching between Aperture priority and Shutter Speed priority.
+//    if (currentMenuItem == main) {
+//      modeIndex++;
+//
+//      if (modeIndex > 1) {
+//        modeIndex = 0;
+//      }
+//    }
+//
+//    refresh();
+//    delay(200);
+//  }
+//
+//  if (currentMenuItem == main && MeteringModeButtonState) {
+//    // Switch between Ambient light and Flash light metering
+//    if (meteringMode == 0) {
+//      meteringMode = 1;
+//    } else {
+//      meteringMode = 0;
+//    }
+//
+//    refresh();
+//    delay(200);
+//  }
+//
+//  if (currentMenuItem == main && (PlusButtonState || MinusButtonState)) {
+//    if (modeIndex == 0) {
+//      // Aperture priority mode
+//      if (PlusButtonState) {
+//        // Increase aperture.
+//        apertureIndex++;
+//
+//        if (apertureIndex > MaxApertureIndex) {
+//          apertureIndex = 0;
+//        }
+//      } else if (MinusButtonState) {
+//        // Decrease aperture
+//        if (apertureIndex > 0) {
+//          apertureIndex--;
+//        } else {
+//          apertureIndex = MaxApertureIndex;
+//        }
+//      }
+//    } else if (modeIndex == 1) {
+//      // Time priority mode
+//      if (PlusButtonState) {
+//        // increase time
+//        T_expIndex++;
+//
+//        if (T_expIndex > MaxTimeIndex) {
+//          T_expIndex = 0;
+//        }
+//      } else if (MinusButtonState) {
+//        // decrease time
+//        if (T_expIndex > 0) {
+//          T_expIndex--;
+//        } else {
+//          T_expIndex = MaxTimeIndex;
+//        }
+//      }
+//    }
+//
+//    delay(200);
+//
+//    refresh();
+//  }
 }

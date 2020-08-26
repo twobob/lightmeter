@@ -1,15 +1,14 @@
 /* TODO
- *  - ISO value too long in the 128x32 display size
- *  - 3rd separator
  *  - T values increment strangely
- *  - buzzer moe
+ *  - buzzer mode
 */
 
 #include <Wire.h>
 #include <BH1750.h>
 #include <EEPROM.h>
-#include <avr/sleep.h>
+//#include <avr/sleep.h>
 #include <U8g2lib.h>
+#include <Bounce2.h>
 
 //U8G2_SH1106_128X64_NONAME_2_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 U8G2_SSD1306_128X32_UNIVISION_2_HW_I2C display(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
@@ -26,8 +25,9 @@ BH1750 lightMeter;
 #define ModeButtonPin           7                       // Mode button pin
 #define MenuButtonPin           2                       // ISO button pin
 #define MeteringModeButtonPin   6                       // Metering Mode (Ambient / Flash)
+#define TimerButtonPin          4                       // Timer button
 #define BuzzerPin               5                       // Buzzer (speaker) pin
-#define BatterVoltagePin        A0                      // Pin for measuring of the battery voltage
+#define BatteryVoltagePin        A0                      // Pin for measuring of the battery voltage
 //#define PowerButtonPin          2
 
 #define MaxISOIndex             57
@@ -42,36 +42,27 @@ float   ISOND;
 boolean ISOmode = false;
 boolean NDmode = false;
 
-boolean PlusButtonState;                // "+" button state
-boolean MinusButtonState;               // "-" button state
-boolean MeteringButtonState;            // Metering button state
-boolean ModeButtonState;                // Mode button state
-boolean MenuButtonState;                // ISO button state
-boolean MeteringModeButtonState;        // Metering mode button state (Ambient / Flash)
+Button button = Button();
+Button PlusButton = Button();         // "+" button state
+Button MinusButton = Button();        // "-" button state
+Button MeteringButton = Button();     // Metering button state
+Button ModeButton = Button();         // Mode button state
+Button MenuButton = Button();         // ISO button state
+Button MeteringModeButton = Button(); // Metering mode button state (Ambient / Flash)
+Button TimerButton = Button();        // Timer button
 
-boolean ISOMenu = false;
-boolean NDMenu = false;
-boolean mainScreen = false;
+//boolean ISOMenu = false;
+//boolean NDMenu = false;
+//boolean mainScreen = false;
+enum MenuItem { main, iso, nd, debug, none };
+enum MenuItem currentMenuItem = main;
 
-// EEPROM for memory recording
-#define ISOIndexAddr        1
-#define apertureIndexAddr   2
-#define modeIndexAddr       3
-#define T_expIndexAddr      4
-#define meteringModeAddr    5
-#define ndIndexAddr         6
-
-#define defaultApertureIndex 12
-#define defaultISOIndex      11
-#define defaultModeIndex     0
-#define defaultT_expIndex    19
-
-uint8_t ISOIndex =          EEPROM.read(ISOIndexAddr);
-uint8_t apertureIndex =     EEPROM.read(apertureIndexAddr);
-uint8_t T_expIndex =        EEPROM.read(T_expIndexAddr);
-uint8_t modeIndex =         EEPROM.read(modeIndexAddr);
-uint8_t meteringMode =      EEPROM.read(meteringModeAddr);
-uint8_t ndIndex =           EEPROM.read(ndIndexAddr);
+uint8_t ISOIndex;
+uint8_t apertureIndex;
+uint8_t T_expIndex;
+uint8_t modeIndex;
+uint8_t meteringMode;
+uint8_t ndIndex;
 
 uint8_t battVolts;
 #define batteryInterval 10000
@@ -90,35 +81,37 @@ unsigned long lastBatteryTime = 0;
 
 // 26634 bytes
 
-void SaveSettings() {
-  // Save lightmeter setting into EEPROM.
-  EEPROM.write(ndIndexAddr, ndIndex);
-  EEPROM.write(ISOIndexAddr, ISOIndex);
-  EEPROM.write(modeIndexAddr, modeIndex);
-  EEPROM.write(apertureIndexAddr, apertureIndex);
-  EEPROM.write(T_expIndexAddr, T_expIndex);
-  EEPROM.write(meteringModeAddr, meteringMode);
-}
+void setup() {
+  // set up the buttons
+  PlusButton.attach(PlusButtonPin, INPUT_PULLUP);
+  PlusButton.interval(5);
+  PlusButton.setPressedState(LOW);
+  
+  MinusButton.attach(MinusButtonPin, INPUT_PULLUP);
+  MinusButton.interval(5);
+  MinusButton.setPressedState(LOW);
+  
+  MeteringButton.attach(MeteringButtonPin, INPUT_PULLUP);
+  MeteringButton.interval(5);
+  MeteringButton.setPressedState(LOW);
+  
+  ModeButton.attach(ModeButtonPin, INPUT_PULLUP);
+  ModeButton.interval(5);
+  ModeButton.setPressedState(LOW);
+  
+  MenuButton.attach(MenuButtonPin, INPUT_PULLUP);
+  MenuButton.interval(5);
+  MenuButton.setPressedState(LOW);
+  
+  MeteringModeButton.attach(MeteringModeButtonPin, INPUT_PULLUP);
+  MeteringModeButton.interval(5);
+  MeteringModeButton.setPressedState(LOW);
+  
+  TimerButton.attach(TimerButtonPin, INPUT_PULLUP);
+  TimerButton.interval(5);
+  TimerButton.setPressedState(LOW);
 
-/*
-  Read buttons state
-*/
-void readButtons() {
-  PlusButtonState = digitalRead(PlusButtonPin);
-  MinusButtonState = digitalRead(MinusButtonPin);
-  MeteringButtonState = digitalRead(MeteringButtonPin);
-  ModeButtonState = digitalRead(ModeButtonPin);
-  MenuButtonState = digitalRead(MenuButtonPin);
-  MeteringModeButtonState = digitalRead(MeteringModeButtonPin);
-}
-
-void setup() {  
-  pinMode(PlusButtonPin, INPUT_PULLUP);
-  pinMode(MinusButtonPin, INPUT_PULLUP);
-  pinMode(MeteringButtonPin, INPUT_PULLUP);
-  pinMode(ModeButtonPin, INPUT_PULLUP);
-  pinMode(MenuButtonPin, INPUT_PULLUP);
-  pinMode(MeteringModeButtonPin, INPUT_PULLUP);
+  
   //pinMode(BuzzerPin, OUTPUT);
 
   //Serial.begin(115200);
@@ -134,89 +127,224 @@ void setup() {
   display.clear();
 
 
-  // IF NO MEMORY WAS RECORDED BEFORE, START WITH THIS VALUES otherwise it will read "255"
-  if (apertureIndex > MaxApertureIndex) {
-    apertureIndex = defaultApertureIndex;
-  }
-
-  if (ISOIndex > MaxISOIndex) {
-    ISOIndex = defaultISOIndex;
-  }
-
-  if (T_expIndex > MaxTimeIndex) {
-    T_expIndex = defaultT_expIndex;
-  }
-
-  if (modeIndex < 0 || modeIndex > 1) {
-    // Aperture priority. Calculating shutter speed.
-    modeIndex = 0;
-  }
-
-  if (meteringMode > 1) {
-    meteringMode = 0;
-  }
-
-  if (ndIndex > MaxNDIndex) {
-    ndIndex = 0;
-  }
+  LoadSettings();
 
   lux = getLux();
   refresh();
 }
 
-void loop() {  
-    if (millis() >= lastBatteryTime + batteryInterval) {
-      lastBatteryTime = millis();
-      battVolts = readBatteryLevel();
-    }
+void menuMain() {
+  if (MeteringButton.pressed()) {
+    // Save setting if Metering button pressed.
+    SaveSettings();
+
+    lux = 0;
+//      refresh();
     
-    readButtons();
-  
-    menu();
-  
-    if (MeteringButtonState == 0) {
-      // Save setting if Metering button pressed.
-      SaveSettings();
-  
+    if (meteringMode == 0) {
+      // Ambient light meter mode.
+      lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
+
+      lux = getLux();
+
+      if (Overflow == 1) {
+        delay(10);
+        getLux();
+      }
+    } else if (meteringMode == 1) {
+      // Flash light metering
+      lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
+
+      unsigned long startTime = millis();
+      uint16_t currentLux = 0;
       lux = 0;
-      refresh();
-      
-      if (meteringMode == 0) {
-        // Ambient light meter mode.
-        lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
-  
-        lux = getLux();
-  
-        if (Overflow == 1) {
-          delay(10);
-          getLux();
+
+      while (true) {
+        // check max flash metering time
+        if (startTime + MaxFlashMeteringTime < millis()) {
+          break;
         }
-  
-        refresh();
-        delay(200);
-      } else if (meteringMode == 1) {
-        // Flash light metering
-        lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
-  
-        unsigned long startTime = millis();
-        uint16_t currentLux = 0;
-        lux = 0;
-  
-        while (true) {
-          // check max flash metering time
-          if (startTime + MaxFlashMeteringTime < millis()) {
-            break;
-          }
-  
-          currentLux = getLux();
-          delay(16);
-          
-          if (currentLux > lux) {
-            lux = currentLux;
-          }
+
+        currentLux = getLux();
+        delay(16);
+        
+        if (currentLux > lux) {
+          lux = currentLux;
         }
-  
-        refresh();
+      }
+
+//        refresh();
+    }
+  }
+
+  if (ModeButton.pressed()) {
+    // switching between Aperture priority and Shutter Speed priority.
+    if (currentMenuItem == main) {
+      modeIndex++;
+
+      if (modeIndex > 1) {
+        modeIndex = 0;
       }
     }
+
+//    refresh();
+//    delay(200);
+  }
+
+  if (MeteringModeButton.pressed()) {
+    // Switch between Ambient light and Flash light metering
+    if (meteringMode == 0) {
+      meteringMode = 1;
+    } else {
+      meteringMode = 0;
+    }
+
+//    refresh();
+//    delay(200);
+  }
+
+  if (PlusButton.pressed() || MinusButton.pressed()) {
+    if (modeIndex == 0) {
+      // Aperture priority mode
+      if (PlusButton.pressed()) {
+        // Increase aperture.
+        apertureIndex++;
+
+        if (apertureIndex > MaxApertureIndex) {
+          apertureIndex = 0;
+        }
+      } else if (MinusButton.pressed()) {
+        // Decrease aperture
+        if (apertureIndex > 0) {
+          apertureIndex--;
+        } else {
+          apertureIndex = MaxApertureIndex;
+        }
+      }
+    } else if (modeIndex == 1) {
+      // Time priority mode
+      if (PlusButton.pressed()) {
+        // increase time
+        T_expIndex++;
+
+        if (T_expIndex > MaxTimeIndex) {
+          T_expIndex = 0;
+        }
+      } else if (MinusButton.pressed()) {
+        // decrease time
+        if (T_expIndex > 0) {
+          T_expIndex--;
+        } else {
+          T_expIndex = MaxTimeIndex;
+        }
+      }
+    }
+
+//    delay(200);
+//
+//    refresh();
+  }
+
+//  refresh();
+}
+
+void menuISO() {
+  // ISO change mode
+  if (PlusButton.pressed()) {
+    // increase ISO
+    ISOIndex++;
+
+    if (ISOIndex > MaxISOIndex) {
+      ISOIndex = 0;
+    }
+  } else if (MinusButton.pressed()) {
+    if (ISOIndex > 0) {
+      ISOIndex--;
+    } else {
+      ISOIndex = MaxISOIndex;
+    }
+  }
+
+//  showISOMenu();
+}
+
+void menuND() {
+  if (PlusButton.pressed()) {
+    ndIndex++;
+
+    if (ndIndex > MaxNDIndex) {
+      ndIndex = 0;
+    }
+  } else if (MinusButton.pressed()) {
+    if (ndIndex <= 0) {
+      ndIndex = MaxNDIndex;
+    } else {
+      ndIndex--;
+    }
+  }
+//  showNDMenu();
+}
+
+void menuDebug() {
+  showDebugMenu();
+}
+
+void loop() {
+  // update all the buttons
+  PlusButton.update();
+  MinusButton.update();
+  MeteringButton.update();
+  ModeButton.update();
+  MenuButton.update();
+  MeteringModeButton.update();
+  TimerButton.update();
+
+  // read the battery level every "batteryInterval"s
+  if (millis() >= lastBatteryTime + batteryInterval) {
+    lastBatteryTime = millis();
+    battVolts = readBatteryLevel();
+  }
+
+  if (MenuButton.pressed()) {
+    currentMenuItem = currentMenuItem + 1;
+  }
+  // display the current ui based on which menu item we are on
+  switch (currentMenuItem) {
+    case MenuItem::main:
+      menuMain();
+      break;
+    case MenuItem::iso:
+      menuISO();
+      break;
+    case MenuItem::nd:
+      menuND();
+      break;
+    case MenuItem::debug:
+      menuDebug();
+      break;
+    case MenuItem::none:
+      currentMenuItem = 0;
+      break;
+  }
+
+  display.firstPage();
+  do {
+    display.clearBuffer();
+    
+    // display the current ui based on which menu item we are on
+    switch (currentMenuItem) {
+      case MenuItem::main:
+        refresh();
+        break;
+      case MenuItem::iso:
+        showISOMenu();
+        break;
+      case MenuItem::nd:
+        showNDMenu();
+        break;
+      case MenuItem::debug:
+        showDebugMenu();
+        break;
+    }
+  } while ( display.nextPage() );
 }
