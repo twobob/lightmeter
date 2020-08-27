@@ -79,6 +79,8 @@ unsigned long lastBatteryTime = 0;
 #define BATTERY_FULL_VALUE 90
 #define BATTERY_EMPTY_VALUE 65
 
+bool displayUpdateNeeded = true;
+
 // 26634 bytes
 
 void setup() {
@@ -135,6 +137,7 @@ void setup() {
 
 void menuMain() {
   if (MeteringButton.pressed()) {
+    displayUpdateNeeded = true;
     // Save setting if Metering button pressed.
     SaveSettings();
 
@@ -178,6 +181,7 @@ void menuMain() {
   }
 
   if (ModeButton.pressed()) {
+    displayUpdateNeeded = true;
     // switching between Aperture priority and Shutter Speed priority.
     if (currentMenuItem == main) {
       modeIndex++;
@@ -192,6 +196,7 @@ void menuMain() {
   }
 
   if (MeteringModeButton.pressed()) {
+     displayUpdateNeeded = true;
     // Switch between Ambient light and Flash light metering
     if (meteringMode == 0) {
       meteringMode = 1;
@@ -204,6 +209,7 @@ void menuMain() {
   }
 
   if (PlusButton.pressed() || MinusButton.pressed()) {
+    displayUpdateNeeded = true;
     if (modeIndex == 0) {
       // Aperture priority mode
       if (PlusButton.pressed()) {
@@ -251,6 +257,7 @@ void menuMain() {
 void menuISO() {
   // ISO change mode
   if (PlusButton.pressed()) {
+    displayUpdateNeeded = true;
     // increase ISO
     ISOIndex++;
 
@@ -258,6 +265,7 @@ void menuISO() {
       ISOIndex = 0;
     }
   } else if (MinusButton.pressed()) {
+    displayUpdateNeeded = true;
     if (ISOIndex > 0) {
       ISOIndex--;
     } else {
@@ -270,12 +278,14 @@ void menuISO() {
 
 void menuND() {
   if (PlusButton.pressed()) {
+    displayUpdateNeeded = true;
     ndIndex++;
 
     if (ndIndex > MaxNDIndex) {
       ndIndex = 0;
     }
   } else if (MinusButton.pressed()) {
+    displayUpdateNeeded = true;
     if (ndIndex <= 0) {
       ndIndex = MaxNDIndex;
     } else {
@@ -306,6 +316,7 @@ void loop() {
   }
 
   if (MenuButton.pressed()) {
+    displayUpdateNeeded = true;
     currentMenuItem = currentMenuItem + 1;
   }
   // display the current ui based on which menu item we are on
@@ -327,24 +338,27 @@ void loop() {
       break;
   }
 
-  display.firstPage();
-  do {
-    display.clearBuffer();
-    
-    // display the current ui based on which menu item we are on
-    switch (currentMenuItem) {
-      case MenuItem::main:
-        refresh();
-        break;
-      case MenuItem::iso:
-        showISOMenu();
-        break;
-      case MenuItem::nd:
-        showNDMenu();
-        break;
-      case MenuItem::debug:
-        showDebugMenu();
-        break;
-    }
-  } while ( display.nextPage() );
+  if (displayUpdateNeeded) {
+    displayUpdateNeeded = false;
+    display.firstPage();
+    do {
+      display.clearBuffer();
+      
+      // display the current ui based on which menu item we are on
+      switch (currentMenuItem) {
+        case MenuItem::main:
+          refresh();
+          break;
+        case MenuItem::iso:
+          showISOMenu();
+          break;
+        case MenuItem::nd:
+          showNDMenu();
+          break;
+        case MenuItem::debug:
+          showDebugMenu();
+          break;
+      }
+    } while ( display.nextPage() );
+  }
 }
