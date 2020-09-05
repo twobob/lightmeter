@@ -80,6 +80,7 @@ unsigned long lastBatteryTime = 0;
 #define BATTERY_EMPTY_VALUE 65
 
 bool displayUpdateNeeded = true;
+bool meteringInProgress = false;
 
 // 26634 bytes
 
@@ -144,40 +145,41 @@ void menuMain() {
     lux = 0;
 //      refresh();
     
-    if (meteringMode == 0) {
-      // Ambient light meter mode.
-      lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
-
-      lux = getLux();
-
-      if (Overflow == 1) {
-        delay(10);
-        getLux();
-      }
-    } else if (meteringMode == 1) {
-      // Flash light metering
-      lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
-
-      unsigned long startTime = millis();
-      uint16_t currentLux = 0;
-      lux = 0;
-
-      while (true) {
-        // check max flash metering time
-        if (startTime + MaxFlashMeteringTime < millis()) {
-          break;
-        }
-
-        currentLux = getLux();
-        delay(16);
-        
-        if (currentLux > lux) {
-          lux = currentLux;
-        }
-      }
+//    if (meteringMode == 0) {
+//      // Ambient light meter mode.
+//      lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
+//
+//      lux = getLux();
+//
+//      if (Overflow == 1) {
+//        delay(10);
+//        getLux();
+//      }
+//    } else if (meteringMode == 1) {
+//      // Flash light metering
+//      lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
+//
+//      unsigned long startTime = millis();
+//      uint16_t currentLux = 0;
+//      lux = 0;
+//
+//      while (true) {
+//        // check max flash metering time
+//        if (startTime + MaxFlashMeteringTime < millis()) {
+//          break;
+//        }
+//
+//        currentLux = getLux();
+//        delay(16);
+//        
+//        if (currentLux > lux) {
+//          lux = currentLux;
+//        }
+//      }
+      meteringInProgress = true;
 
 //        refresh();
-    }
+    //}
   }
 
   if (ModeButton.pressed()) {
@@ -359,6 +361,47 @@ void loop() {
           showDebugMenu();
           break;
       }
+
+      if(meteringInProgress) {
+        showMeteringNotification();
+      }
     } while ( display.nextPage() );
+  }
+
+  if (meteringInProgress) {
+    if (meteringMode == 0) {
+      // Ambient light meter mode.
+      lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE_2);
+
+      lux = getLux();
+
+      if (Overflow == 1) {
+        delay(10);
+        getLux();
+      }
+    } else if (meteringMode == 1) {
+      // Flash light metering
+      lightMeter.configure(BH1750::CONTINUOUS_LOW_RES_MODE);
+
+      unsigned long startTime = millis();
+      uint16_t currentLux = 0;
+      lux = 0;
+
+      while (true) {
+        // check max flash metering time
+        if (startTime + MaxFlashMeteringTime < millis()) {
+          break;
+        }
+
+        currentLux = getLux();
+        delay(16);
+        
+        if (currentLux > lux) {
+          lux = currentLux;
+        }
+      }
+    }
+    meteringInProgress = false;
+    displayUpdateNeeded = true;
   }
 }

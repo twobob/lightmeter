@@ -344,6 +344,18 @@ void showDebugMenu() {
 //  } while ( display.nextPage() );
 }
 
+void showMeteringNotification() {
+  //display.clearDisplay();
+  display.setFont(FONT_H2);
+//  u8g2.setFontMode(0);
+//  display.setDrawColor(1);
+//  display.drawBox(NOTIFICATION_METERING_VALUE_X - 5, NOTIFICATION_METERING_VALUE_Y - 10, NOTIFICATION_METERING_VALUE_X + 50, NOTIFICATION_METERING_VALUE_Y);
+  display.setDrawColor(0);
+  display.setCursor(NOTIFICATION_METERING_VALUE_X, NOTIFICATION_METERING_VALUE_Y);
+  display.print(NOTIFICATION_METERING_TEXT);
+  display.setDrawColor(1);
+}
+
 // Navigation menu
 void menu() {
 
